@@ -1,20 +1,24 @@
-use rusqlite::{Connection, Result};
-
 use crate::cli::Commands;
 use crate::database;
 use crate::utils;
 use crate::utils::generate_pdf;
 use chrono::prelude::*;
+use rusqlite::{Connection, Result};
 
 pub fn execute_command(connection: &Connection, command: Commands) -> Result<()> {
     // Execute the command
     match command {
-        Commands::NewClient { name, email, phone_number } => {
+        Commands::NewClient {
+            name,
+            email,
+            phone_number,
+        } => {
             println!("Creating new client...");
             // Prompt for name and email if not provided
             let name = name.unwrap_or_else(|| utils::prompt("Enter client name: "));
             let email = email.unwrap_or_else(|| utils::prompt("Enter client email: "));
-            let phone_number = phone_number.unwrap_or_else(|| utils::prompt("Enter client phone number: "));
+            let phone_number =
+                phone_number.unwrap_or_else(|| utils::prompt("Enter client phone number: "));
 
             database::new_client(connection, &name, &email, &phone_number)?;
             println!("Created client: {} <{}> <{}>", name, email, phone_number);

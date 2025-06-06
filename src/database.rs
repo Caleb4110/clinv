@@ -1,6 +1,5 @@
-use rusqlite::{Connection, OptionalExtension, Result};
-
 use crate::models::{Client, Invoice, InvoiceForPdf, InvoiceItem};
+use rusqlite::{Connection, OptionalExtension, Result};
 
 pub fn connect() -> Result<Connection> {
     let connection = Connection::open("clinv.db")?;
@@ -41,7 +40,12 @@ pub fn connect() -> Result<Connection> {
     Ok(connection)
 }
 
-pub fn new_client(connection: &Connection, name: &str, email: &str, phone_number: &str) -> Result<()> {
+pub fn new_client(
+    connection: &Connection,
+    name: &str,
+    email: &str,
+    phone_number: &str,
+) -> Result<()> {
     connection.execute(
         "INSERT INTO client (name, email, phone_number) VALUES (?1, ?2, ?3)",
         &[name, email, phone_number],
@@ -62,7 +66,7 @@ pub fn get_clients(connection: &Connection) -> Result<Vec<Client>> {
             id: row.get(0)?,
             name: row.get(1)?,
             email: row.get(2)?,
-            phone_number: row.get(3)?
+            phone_number: row.get(3)?,
         })
     })?;
 
@@ -195,8 +199,13 @@ pub fn get_invoice(connection: &Connection, invoice_id: &str) -> Result<InvoiceF
         }
     }
 
-    if let (Some(id), Some(client_name), Some(client_email), Some(client_phone_number), Some(date)) =
-        (id, client_name, client_email, client_phone_number, date)
+    if let (
+        Some(id),
+        Some(client_name),
+        Some(client_email),
+        Some(client_phone_number),
+        Some(date),
+    ) = (id, client_name, client_email, client_phone_number, date)
     {
         Ok(InvoiceForPdf {
             id,

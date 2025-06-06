@@ -1,11 +1,7 @@
-mod cli;
-mod commands;
-mod database;
-mod utils;
-mod models;
-
 use clap::Parser;
-use cli::{map_command_words, Cli};
+use clinv::cli::{map_command_words, Cli};
+use clinv::commands;
+use clinv::database;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
@@ -15,9 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let command = match cli.command {
         Some(cmd) => cmd,
         None => match map_command_words(&cli.raw_command.words) {
-            Some(cmd) => {
-                cmd
-            }
+            Some(cmd) => cmd,
             None => {
                 return Err(format!("Unknown command: {}", cli.raw_command.words.join(" ")).into());
             }
