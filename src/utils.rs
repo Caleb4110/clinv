@@ -3,7 +3,7 @@ use std::{
     fs,
     io::{self, Write},
 };
-use crate::InvoiceForPdf;
+use crate::models::InvoiceForPdf;
 use wkhtmltopdf::{self, Orientation, PdfApplication};
 use chrono::{Duration, NaiveDate};
 use std::path::Path;

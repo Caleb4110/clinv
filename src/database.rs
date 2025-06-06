@@ -1,6 +1,6 @@
 use rusqlite::{Connection, OptionalExtension, Result};
 
-use crate::{Client, Invoice, InvoiceForPdf, InvoiceItem};
+use crate::models::{Client, Invoice, InvoiceForPdf, InvoiceItem};
 
 pub fn connect() -> Result<Connection> {
     let connection = Connection::open("clinv.db")?;
