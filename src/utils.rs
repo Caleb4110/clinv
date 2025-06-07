@@ -1,13 +1,14 @@
+use crate::models::InvoiceForPdf;
+use chrono::{Duration, NaiveDate};
 use rusqlite::{params, Connection};
+use std::path::Path;
 use std::{
     fs,
     io::{self, Write},
 };
-use crate::models::InvoiceForPdf;
 use wkhtmltopdf::{self, Orientation, PdfApplication};
-use chrono::{Duration, NaiveDate};
-use std::path::Path;
 
+// Generic prompt function
 pub fn prompt(prompt_text: &str) -> String {
     print!("{}", prompt_text);
     io::stdout().flush().unwrap();
@@ -18,7 +19,7 @@ pub fn prompt(prompt_text: &str) -> String {
     input.trim().to_string()
 }
 
-fn prompt_for_f64(prompt_msg: &str) -> f64 {
+pub fn prompt_for_f64(prompt_msg: &str) -> f64 {
     loop {
         let input = prompt(prompt_msg);
         if input.is_empty() {
@@ -29,6 +30,17 @@ fn prompt_for_f64(prompt_msg: &str) -> f64 {
             Ok(n) => return n,
             Err(e) => println!("Not a valid number: {}", e),
         }
+    }
+}
+
+pub fn prompt_for_str(prompt_msg: &str) -> String {
+    loop {
+        let input = prompt(prompt_msg);
+        if input.is_empty() {
+            println!("Value must not be empty");
+            continue;
+        }
+        return input
     }
 }
 
@@ -77,10 +89,7 @@ pub fn generate_pdf(
     let year_month = date.format("%Y-%m").to_string();
     let day = date.format("%d").to_string();
     let sanitized_client_name = invoice.client_name.replace("/", "-").replace(" ", "-");
-    let filename = format!(
-        "{}-{}-{}.pdf",
-        day, invoice.id, sanitized_client_name
-    );
+    let filename = format!("{}-{}-{}.pdf", day, invoice.id, sanitized_client_name);
     let folder_path = Path::new("invoices").join(&year_month);
     fs::create_dir_all(&folder_path)?;
     let pdf_path = folder_path.join(&filename);

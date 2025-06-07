@@ -1,7 +1,15 @@
 [package]
 name = "clinv"
-version = "0.1.0"
 edition = "2021"
+version = "0.1.0"
+authors = ["Caleb Walker <calebw4110@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "A tool to create invoices and generate pdf's from the command line"
+readme = "README.md"
+homepage = "https://github.com/Caleb4110/clinv"
+repository = "https://github.com/Caleb4110/clinv"
+keywords = ["cli", "invoice", "pdf"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 chrono = "0.4.41"

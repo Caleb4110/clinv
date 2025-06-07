@@ -7,13 +7,12 @@ pub fn connect() -> Result<Connection> {
     connection.execute(
         "CREATE TABLE IF NOT EXISTS client (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
+            name TEXT UNIQUE NOT NULL,
             email TEXT NOT NULL,
             phone_number TEXT NOT NULL
         )",
         [],
     )?;
-    //connection.execute("DROP TABLE invoice_item", [],)?;
     connection.execute(
         "CREATE TABLE IF NOT EXISTS invoice (
             id INTEGER PRIMARY KEY,
@@ -53,8 +52,8 @@ pub fn new_client(
     Ok(())
 }
 
-pub fn delete_client(connection: &Connection, client_id: &str) -> Result<()> {
-    connection.execute("DELETE FROM client WHERE id = ?1", &[client_id])?;
+pub fn delete_client(connection: &Connection, client_name: &str) -> Result<()> {
+    connection.execute("DELETE FROM client WHERE name = ?1", &[client_name])?;
     Ok(())
 }
 
@@ -75,22 +74,22 @@ pub fn get_clients(connection: &Connection) -> Result<Vec<Client>> {
     Ok(clients)
 }
 
-pub fn new_invoice(connection: &Connection, client_id: &str, date_string: &str) -> Result<i64> {
+pub fn new_invoice(connection: &Connection, client_name: &str, date_string: &str) -> Result<i64> {
     // Check if client exists
     let client_exists: Option<i32> = connection
-        .query_row("SELECT id FROM client WHERE id = ?1", &[client_id], |row| {
-            row.get(0)
-        })
+        .query_row(
+            "SELECT id FROM client WHERE name = ?1",
+            &[client_name],
+            |row| row.get(0),
+        )
         .optional()?;
-    println!("HELLO");
     if client_exists.is_none() {
         return Err(rusqlite::Error::QueryReturnedNoRows);
     }
-
     // Insert new invoice
     connection.execute(
         "INSERT INTO invoice (client_id, date) VALUES (?1, ?2)",
-        &[client_id, date_string],
+        &[&client_exists.unwrap().to_string(), date_string],
     )?;
     let invoice_id = connection.last_insert_rowid();
 
@@ -106,22 +105,42 @@ pub fn delete_invoice(connection: &Connection, invoice_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn get_invoices(connection: &Connection) -> Result<Vec<Invoice>> {
-    let mut statement = connection.prepare(
-        "SELECT
-            invoice.id as invoice_id, invoice.client_id, invoice.date,
-            invoice_item.id as item_id, invoice_item.description, invoice_item.hours,
-            invoice_item.rate, invoice_item.amount
-        FROM invoice
-        LEFT JOIN invoice_item on invoice.id = invoice_item.invoice_id
-        ORDER BY invoice.id",
-    )?;
+pub fn get_invoices(connection: &Connection, client_name: Option<&str>) -> Result<Vec<Invoice>> {
+    let mut statement;
+    let mut rows_iter;
+    match client_name {
+        Some(_) => {
+            statement = connection.prepare(
+                "SELECT
+                invoice.id as invoice_id, invoice.client_id, invoice.date,
+                invoice_item.id as item_id, invoice_item.description, invoice_item.hours,
+                invoice_item.rate, invoice_item.amount
+            FROM invoice
+            INNER JOIN client ON invoice.client_id = client.id
+            LEFT JOIN invoice_item on invoice.id = invoice_item.invoice_id
+            WHERE client.name = ?1
+            ORDER BY invoice.id",
+            )?;
+            rows_iter = statement.query([client_name])?;
+        }
+        None => {
+            statement = connection.prepare(
+                "SELECT
+                invoice.id as invoice_id, invoice.client_id, invoice.date,
+                invoice_item.id as item_id, invoice_item.description, invoice_item.hours,
+                invoice_item.rate, invoice_item.amount
+            FROM invoice
+            LEFT JOIN invoice_item on invoice.id = invoice_item.invoice_id
+            ORDER BY invoice.id",
+            )?;
+            rows_iter = statement.query([])?;
+        }
+    }
 
     let mut invoices = Vec::new();
     let mut current_invoice_id = None;
     let mut current_invoice = None;
 
-    let mut rows_iter = statement.query([])?;
     while let Some(row) = rows_iter.next()? {
         let invoice_id: i32 = row.get(0)?;
         if current_invoice_id != Some(invoice_id) {

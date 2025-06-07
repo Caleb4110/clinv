@@ -30,9 +30,9 @@ pub enum Commands {
 
     /// Create a new invoice
     NewInvoice {
-        /// Client ID
+        /// Client name
         #[arg(short, long)]
-        client: Option<String>,
+        client_name: Option<String>,
     },
 
     /// List all clients
@@ -40,16 +40,16 @@ pub enum Commands {
 
     /// List all invoices
     ListInvoices {
-        /// Filter by client ID
+        /// Client name
         #[arg(short, long)]
-        client: Option<String>,
+        client_name: Option<String>,
     },
 
     /// Delete a client
     DeleteClient {
-        /// Filter by client ID
+        /// Client name
         #[arg(short, long)]
-        client_id: Option<String>,
+        client_name: Option<String>,
     },
 
     /// Delete an invoice
@@ -88,23 +88,28 @@ pub fn map_command_words(words: &[String]) -> Option<Commands> {
                 phone_number: None,
             })
         }
-        [s1, s2, ..] if s1.to_lowercase() == "new" && s2.to_lowercase() == "invoice" => {
-            Some(Commands::NewInvoice { client: None })
+        [s1, s2, rest @ ..] if s1.to_lowercase() == "new" && s2.to_lowercase() == "invoice" => {
+            let name = rest.get(0).map(|s| s.clone());
+            Some(Commands::NewInvoice { client_name: name })
         }
         [s1, s2] if s1.to_lowercase() == "list" && s2.to_lowercase() == "clients" => {
             Some(Commands::ListClients)
         }
-        [s1, s2] if s1.to_lowercase() == "list" && s2.to_lowercase() == "invoices" => {
-            Some(Commands::ListInvoices { client: None })
+        [s1, s2, rest @ ..] if s1.to_lowercase() == "list" && s2.to_lowercase() == "invoices" => {
+            let name = rest.get(0).map(|s| s.clone());
+            Some(Commands::ListInvoices { client_name: name })
         }
-        [s1, s2] if s1.to_lowercase() == "delete" && s2.to_lowercase() == "client" => {
-            Some(Commands::DeleteClient { client_id: None })
+        [s1, s2, rest @ ..] if s1.to_lowercase() == "delete" && s2.to_lowercase() == "client" => {
+            let name = rest.get(0).map(|s| s.clone());
+            Some(Commands::DeleteClient { client_name: name })
         }
-        [s1, s2] if s1.to_lowercase() == "delete" && s2.to_lowercase() == "invoice" => {
-            Some(Commands::DeleteInvoice { invoice_id: None })
+        [s1, s2, rest @ ..] if s1.to_lowercase() == "delete" && s2.to_lowercase() == "invoice" => {
+            let id = rest.get(0).map(|s| s.clone());
+            Some(Commands::DeleteInvoice { invoice_id: id })
         }
-        [s1, ..] if s1.to_lowercase() == "generate" => {
-            Some(Commands::Generate { invoice_id: None })
+        [s1, rest @ ..] if s1.to_lowercase() == "generate" => {
+            let id = rest.get(0).map(|s| s.clone());
+            Some(Commands::Generate { invoice_id: id })
         }
         _ => None,
     }
