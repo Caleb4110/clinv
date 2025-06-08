@@ -179,7 +179,6 @@ dependencies = [
  "chrono",
  "clap",
  "email_address",
- "once_cell",
  "phonenumber",
  "rusqlite",
  "tempfile",
