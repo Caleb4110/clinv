@@ -19,9 +19,18 @@ pub fn execute_command(connection: &Connection, command: Commands) -> Result<()>
             let name = name.unwrap_or_else(|| utils::prompt_for_str("Enter client name: "));
             let nickname = nickname
                 .unwrap_or_else(|| utils::prompt_for_str("Enter a nickname for the client: "));
-            let email = email.unwrap_or_else(|| utils::prompt_for_str("Enter client email: "));
-            let phone_number = phone_number
+            let mut email = email.unwrap_or_else(|| utils::prompt_for_str("Enter client email: "));
+            while !utils::is_valid_email(&email) {
+                println!("Not a valid email");
+                email = utils::prompt_for_str("Enter client email: ");
+            }
+
+            let mut phone_number = phone_number
                 .unwrap_or_else(|| utils::prompt_for_str("Enter client phone number: "));
+            while !utils::is_valid_phone(&phone_number) {
+                println!("Not a valid phone number");
+                phone_number = utils::prompt_for_str("Enter client phone number: ");
+            }
 
             // Create and notify
             database::new_client(connection, &name, &nickname, &email, &phone_number)?;

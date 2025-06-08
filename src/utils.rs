@@ -1,5 +1,7 @@
 use crate::models::InvoiceForPdf;
 use chrono::{Duration, NaiveDate};
+use email_address::EmailAddress;
+use phonenumber::{country, parse};
 use rusqlite::{params, Connection};
 use std::path::Path;
 use std::error::Error;
@@ -73,6 +75,14 @@ pub fn read_and_add_invoice_items(connection: &Connection, invoice_id: i64) -> V
         println!("Item added.\n");
     }
     item_ids
+}
+
+pub fn is_valid_phone(number: &str) -> bool {
+    parse(Some(country::AU), number).is_ok()
+}
+
+pub fn is_valid_email(email: &str) -> bool {
+    EmailAddress::is_valid(email)
 }
 
 pub fn generate_pdf(
