@@ -1,13 +1,12 @@
 use crate::models::{Client, Invoice, InvoiceForPdf, InvoiceItem};
 use rusqlite::{Connection, OptionalExtension, Result};
 
-pub fn connect() -> Result<Connection> {
-    let connection = Connection::open("clinv.db")?;
-
+pub fn init_db(connection: &Connection) -> Result<()> {
     connection.execute(
         "CREATE TABLE IF NOT EXISTS client (
             id INTEGER PRIMARY KEY,
-            name TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            nickname TEXT UNIQUE NOT NULL,
             email TEXT NOT NULL,
             phone_number TEXT NOT NULL
         )",
@@ -19,6 +18,7 @@ pub fn connect() -> Result<Connection> {
             client_id INTEGER NOT NULL,
             date TEXT NOT NULL,
             FOREIGN KEY (client_id) REFERENCES client(id)
+
         )",
         [],
     )?;
@@ -36,24 +36,25 @@ pub fn connect() -> Result<Connection> {
         [],
     )?;
 
-    Ok(connection)
+    Ok(())
 }
 
 pub fn new_client(
     connection: &Connection,
     name: &str,
+    nickname: &str,
     email: &str,
     phone_number: &str,
 ) -> Result<()> {
     connection.execute(
-        "INSERT INTO client (name, email, phone_number) VALUES (?1, ?2, ?3)",
-        &[name, email, phone_number],
+        "INSERT INTO client (name, nickname, email, phone_number) VALUES (?1, ?2, ?3, ?4)",
+        &[name, nickname, email, phone_number],
     )?;
     Ok(())
 }
 
-pub fn delete_client(connection: &Connection, client_name: &str) -> Result<()> {
-    connection.execute("DELETE FROM client WHERE name = ?1", &[client_name])?;
+pub fn delete_client(connection: &Connection, client_nickname: &str) -> Result<()> {
+    connection.execute("DELETE FROM client WHERE nickname = ?1", &[client_nickname])?;
     Ok(())
 }
 
@@ -64,8 +65,9 @@ pub fn get_clients(connection: &Connection) -> Result<Vec<Client>> {
         Ok(Client {
             id: row.get(0)?,
             name: row.get(1)?,
-            email: row.get(2)?,
-            phone_number: row.get(3)?,
+            nickname: row.get(2)?,
+            email: row.get(3)?,
+            phone_number: row.get(4)?,
         })
     })?;
 
@@ -74,12 +76,12 @@ pub fn get_clients(connection: &Connection) -> Result<Vec<Client>> {
     Ok(clients)
 }
 
-pub fn new_invoice(connection: &Connection, client_name: &str, date_string: &str) -> Result<i64> {
+pub fn new_invoice(connection: &Connection, client_nickname: &str, date_string: &str) -> Result<i64> {
     // Check if client exists
     let client_exists: Option<i32> = connection
         .query_row(
-            "SELECT id FROM client WHERE name = ?1",
-            &[client_name],
+            "SELECT id FROM client WHERE nickname = ?1",
+            &[client_nickname],
             |row| row.get(0),
         )
         .optional()?;
@@ -105,10 +107,10 @@ pub fn delete_invoice(connection: &Connection, invoice_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn get_invoices(connection: &Connection, client_name: Option<&str>) -> Result<Vec<Invoice>> {
+pub fn get_invoices(connection: &Connection, client_nickname: Option<&str>) -> Result<Vec<Invoice>> {
     let mut statement;
     let mut rows_iter;
-    match client_name {
+    match client_nickname {
         Some(_) => {
             statement = connection.prepare(
                 "SELECT
@@ -118,10 +120,10 @@ pub fn get_invoices(connection: &Connection, client_name: Option<&str>) -> Resul
             FROM invoice
             INNER JOIN client ON invoice.client_id = client.id
             LEFT JOIN invoice_item on invoice.id = invoice_item.invoice_id
-            WHERE client.name = ?1
+            WHERE client.nickname = ?1
             ORDER BY invoice.id",
             )?;
-            rows_iter = statement.query([client_name])?;
+            rows_iter = statement.query([client_nickname])?;
         }
         None => {
             statement = connection.prepare(

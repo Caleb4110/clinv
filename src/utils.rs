@@ -2,6 +2,7 @@ use crate::models::InvoiceForPdf;
 use chrono::{Duration, NaiveDate};
 use rusqlite::{params, Connection};
 use std::path::Path;
+use std::error::Error;
 use std::{
     fs,
     io::{self, Write},
@@ -44,7 +45,7 @@ pub fn prompt_for_str(prompt_msg: &str) -> String {
     }
 }
 
-pub fn read_invoice_items(connection: &Connection, invoice_id: i64) -> Vec<i64> {
+pub fn read_and_add_invoice_items(connection: &Connection, invoice_id: i64) -> Vec<i64> {
     let mut item_ids = Vec::new();
     loop {
         let description = prompt("Description (leave empty to finish): ");
@@ -77,7 +78,7 @@ pub fn read_invoice_items(connection: &Connection, invoice_id: i64) -> Vec<i64> 
 pub fn generate_pdf(
     invoice: &InvoiceForPdf,
     template: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<String, Box<dyn Error>> {
     let html = fs::read_to_string(template)?;
 
     let date = NaiveDate::parse_from_str(&invoice.date, "%Y-%m-%d")?;
@@ -141,6 +142,6 @@ pub fn generate_pdf(
         .expect("failed to build pdf");
 
     pdfout.save(pdf_path_str).expect("failed to save file");
-    println!("generated PDF saved as: {}", pdf_path_str);
-    Ok(())
+
+    Ok(pdf_path_str.to_string())
 }

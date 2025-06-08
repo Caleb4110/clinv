@@ -3,6 +3,7 @@
 pub struct Client {
     pub id: i32,
     pub name: String,
+    pub nickname: String,
     pub email: String,
     pub phone_number: String
 }

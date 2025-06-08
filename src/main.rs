@@ -1,11 +1,12 @@
 use clap::Parser;
 use clinv::cli::{map_command_words, Cli};
-use clinv::commands;
-use clinv::database;
+use clinv::{commands, database};
+use rusqlite::Connection;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
-    let connection = database::connect()?;
+    let connection = Connection::open("./clinv.db")?;
+    database::init_db(&connection)?;
 
     // Determine the command to execute
     let command = match cli.command {

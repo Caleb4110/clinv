@@ -5,12 +5,14 @@ fn test_client_struct() {
     let client = Client {
         id: 1,
         name: "John Doe".to_string(),
+        nickname: "johnny".to_string(),
         email: "john@example.com".to_string(),
         phone_number: "123456789".to_string(),
     };
 
     assert_eq!(client.id, 1);
     assert_eq!(client.name, "John Doe");
+    assert_eq!(client.nickname, "johnny");
     assert_eq!(client.email, "john@example.com");
     assert_eq!(client.phone_number, "123456789");
 }

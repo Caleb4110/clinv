@@ -6,8 +6,9 @@ fn test_map_command_words_new_client() {
     let words = vec!["new".to_string(), "client".to_string()];
     let cmd = map_command_words(&words);
     match cmd {
-        Some(Commands::NewClient { name, email, phone_number }) => {
+        Some(Commands::NewClient { name, nickname, email, phone_number }) => {
             assert!(name.is_none());
+            assert!(nickname.is_none());
             assert!(email.is_none());
             assert!(phone_number.is_none());
         }
@@ -20,7 +21,7 @@ fn test_map_command_words_new_invoice() {
     let words = vec!["new".to_string(), "invoice".to_string()];
     let cmd = map_command_words(&words);
     match cmd {
-        Some(Commands::NewInvoice { client }) => assert!(client.is_none()),
+        Some(Commands::NewInvoice { client_nickname }) => assert!(client_nickname.is_none()),
         _ => panic!("Expected Some(Commands::NewInvoice)"),
     }
 }
@@ -37,7 +38,7 @@ fn test_map_command_words_list_invoices() {
     let words = vec!["list".to_string(), "invoices".to_string()];
     let cmd = map_command_words(&words);
     match cmd {
-        Some(Commands::ListInvoices { client }) => assert!(client.is_none()),
+        Some(Commands::ListInvoices { client_nickname }) => assert!(client_nickname.is_none()),
         _ => panic!("Expected Some(Commands::ListInvoices)"),
     }
 }
@@ -47,7 +48,7 @@ fn test_map_command_words_delete_client() {
     let words = vec!["delete".to_string(), "client".to_string()];
     let cmd = map_command_words(&words);
     match cmd {
-        Some(Commands::DeleteClient { client_id }) => assert!(client_id.is_none()),
+        Some(Commands::DeleteClient { client_nickname }) => assert!(client_nickname.is_none()),
         _ => panic!("Expected Some(Commands::DeleteClient)"),
     }
 }
@@ -86,12 +87,14 @@ fn test_cli_parse_new_client() {
         "clinv",
         "new-client",
         "--name", "Alice",
+        "--nickname", "al",
         "--email", "alice@example.com",
         "--phone-number", "1234",
     ]);
     match cli.command {
-        Some(Commands::NewClient { name, email, phone_number }) => {
+        Some(Commands::NewClient { name, nickname, email, phone_number }) => {
             assert_eq!(name.as_deref(), Some("Alice"));
+            assert_eq!(nickname.as_deref(), Some("al"));
             assert_eq!(email.as_deref(), Some("alice@example.com"));
             assert_eq!(phone_number.as_deref(), Some("1234"));
         }
